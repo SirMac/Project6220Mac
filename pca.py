@@ -13,15 +13,20 @@ import numpy as np
 import plotly.express as px
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
+import csv
 
+# Allow printing of all data columns
+pd.options.display.max_columns = None
+pd.options.display.max_rows = None
+np.set_printoptions(threshold=np.inf)
 
+sourceFile = open('printout.txt', 'w')
 data = pd.read_csv("water_quality.csv")
-# print(data.head())
-
 
 # remove all the rows that contain null values
 data = data.dropna()
 # print(data.isnull().sum())
+# print(data.head(), file=sourceFile)
 
 # Visualize data
 # Plot heat map of original data
@@ -32,14 +37,14 @@ data = data.dropna()
 
 # Pair plot
 # plt.figure(figsize=(10, 8))
-# sns.pairplot(data, hue="Potability Pair Plot")
+# sns.pairplot(data, hue="Potability")
 # plt.show()
 
 
 
 # Standardize data
 x_std = StandardScaler().fit_transform(data)
-# print('Standardize data: \n',x_std)
+print('Standardize data: \n',x_std[0:5, 0:10], file=sourceFile)
 
 # Calculate covariance
 mean_vec = np.mean(x_std, axis=0)
@@ -66,7 +71,7 @@ pca = PCA(n_components=2)
 # pca = PCA(0.90)
 x_pca = pca.fit_transform(x_std)
 
-pca = PCA().fit(data)
+# pca = PCA().fit(data)
 # plt.plot(np.cumsum(pca.explained_variance_ratio_), '--bo')
 # plt.gca().invert_yaxis()
 # plt.xlabel('number of components')
@@ -74,66 +79,49 @@ pca = PCA().fit(data)
 # plt.show()
 
 
-loadings = pca.components_.T * np.sqrt(pca.explained_variance_)
-
-# fig = px.scatter(x_pca, x=0, y=1, color=data['Potability'])
-# fig = px.scatter(x_pca)
-# features = list(data)
-# print(features)
-X = np.arange(0,10,1)
-Y = np.arange(0,10,1)
-plt.scatter(x_std[:, 0], x_std[:, 1])
-# plt.quiver(X,Y, eig_vecs[:,1], eig_vecs[:,0], zorder=11, width=0.01, scale=3)
-# for i, feature in enumerate(features):
-#     fig.add_annotation(
-#         ax=0, ay=1,
-#         axref="x", ayref="y",
-#         x=loadings[i, 4],
-#         y=loadings[i, 5],
-#         showarrow=True,
-#         arrowsize=2,
-#         arrowhead=1,
-#         xanchor="right",
-#         yanchor="top"
-#     )
-# plt.show()
-
-
 
 # Project original data to new axis
-# def arrow(v1, v2, ax):
-#     arrowprops=dict(arrowstyle='->',
-#                    linewidth=2,
-#                    shrinkA=0, shrinkB=0)
-#     ax.annotate("", v2, v1, arrowprops=arrowprops)
+#Get the loadings of x and y axes
+sns.set()
+pca_df = pd.DataFrame(
+    data=x_pca, 
+    columns=['PC1', 'PC2']
+)
+pca_df_scaled = pca_df.copy()
+features = list(data)
+loadings = pca.components_
+xs = loadings[0]
+ys = loadings[1]
 
-# proj_data = eig_vecs.T.dot(x_std.T)
-# print(proj_data)
-# plt.scatter(proj_data[:, 0], proj_data[:, 1])
-# fig, axes = plt.subplots(1,2, figsize=(12,4))
-# axes[0].axis('equal')
-# axes[0].scatter(x_std[:,0], x_std[:,1])
-# for l, v in zip(pca.explained_variance_, pca.components_):
-#     arrow([0,0], v*l*3, axes)
+sns.lmplot(
+    x='PC1', 
+    y='PC2', 
+    data=pca_df_scaled, 
+    fit_reg=False, 
+)
+
+
+# Plot the loadings on a scatterplot
+# for i, varnames in enumerate(features):
+#     plt.scatter(xs[i], ys[i], s=100)
+#     plt.arrow(
+#         0, 0, # coordinates of arrow base
+#         xs[i], # length of the arrow along x
+#         ys[i], # length of the arrow along y
+#         color='r', 
+#         head_width=0.06,
+#         head_length=0.06, 
+#         )
+#     # plt.text(xs[i], ys[i], varnames)
+
+# xticks = np.linspace(-0.8, 0.8, num=5)
+# yticks = np.linspace(-0.8, 0.8, num=5)
+# plt.xticks(xticks)
+# plt.yticks(yticks)
+# plt.xlabel('PC1')
+# plt.ylabel('PC2')
+# plt.title('2D Biplot of projected data')
 # plt.show()
-
-
-# Plot vector
-# def draw_vector(v0, v1, ax=None):
-#     ax = ax or plt.gca()
-#     arrowprops=dict(arrowstyle='->',
-#                     linewidth=2,
-#                     shrinkA=0, shrinkB=0)
-#     ax.annotate('', v1, v0, arrowprops=arrowprops)
-
-# # plot data
-# plt.scatter(data[:, 0], data[:, 1], alpha=0.2)
-# for length, vector in zip(pca.explained_variance_, pca.components_):
-#     v = vector * 3 * np.sqrt(length)
-#     draw_vector(pca.mean_, pca.mean_ + v)
-# plt.axis('equal')
-# plt.show()
-
 
 
 # Plot scatter diagram

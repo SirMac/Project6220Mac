@@ -3,6 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+logs.*
+printout.txt
+pca.py
+
 # C extensions
 *.so
 
